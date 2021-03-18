@@ -11,17 +11,16 @@ extern crate rocket;
 extern crate rocket_contrib;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
 extern crate serde_json;
 
 use dotenv::dotenv;
-use std::env;
 use routes::*;
+use std::env;
 
 mod db;
-mod schema;
 mod models;
 mod routes;
+mod schema;
 
 fn rocket() -> rocket::Rocket {
     dotenv().ok();
@@ -31,10 +30,7 @@ fn rocket() -> rocket::Rocket {
     let pool = db::init_pool(database_url);
     rocket::ignite()
         .manage(pool)
-        .mount(
-            "/api/v1/users",
-            routes![get_all, new_user, find_user],
-        )
+        .mount("/api/v1/users", routes![get_all, new_user, find_user])
 }
 
 fn main() {

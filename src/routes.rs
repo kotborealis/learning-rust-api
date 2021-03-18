@@ -1,45 +1,43 @@
 use super::db::Conn as DbConn;
+use super::models::users::{User, UserData, UserNew};
+use diesel::result::Error;
+use rocket::http::Status;
+use rocket::response::status;
 use rocket_contrib::json::Json;
-use super::models::users::{User, NewUser, UserData};
-use serde_json::Value;
 
-#[get("/", format = "application/json")]
-pub fn get_all(conn: DbConn) -> Json<Value> {
-    let users = User::get_all_users(&conn);
-    Json(json!({
-        "status": 200,
-        "result": users
-    }))
+#[get("/")]
+pub fn get_all(conn: DbConn) -> Result<status::Accepted<Json<Vec<User>>>, Status> {
+    User::get_all_users(&conn)
+        .map(|users| status::Accepted(Some(Json(users))))
+        .map_err(|error| error_status(error))
 }
 
 #[get("/find?<username>")]
-pub fn find_user(conn: DbConn, username: Option<String>) -> Json<Value> {
-    match username {
-        Some(username) => {
-            println!("Find {}", username);
-            let user_data = UserData { username };
-            let users = User::get_user_by_username(user_data, &conn);
-            Json(json!({
-                "status": 200,
-                "result": users
-            }))
-        },
-        None => {
-            Json(json!({
-                "status": 400,
-                "result": {}
-            }))
-        }
-    }
+pub fn find_user(
+    conn: DbConn,
+    username: String,
+) -> Result<status::Accepted<Json<Vec<User>>>, Status> {
+    let user_data = UserData { username };
+    User::get_user_by_username(user_data, &conn)
+        .map(|users| status::Accepted(Some(Json(users))))
+        .map_err(error_status)
 }
 
-#[post("/", format = "application/json", data = "<new_user>")]
-pub fn new_user(conn: DbConn, new_user: Json<NewUser>) -> Json<Value> {
+#[post("/", data = "<new_user>")]
+pub fn new_user(
+    conn: DbConn,
+    new_user: Json<UserNew>,
+) -> Result<status::Created<Json<User>>, Status> {
     let new_user = new_user.into_inner();
-    let status = User::insert_user(&new_user, &conn);
 
-    Json(json!({
-        "status": if status { 200 } else { 400 },
-        "result": new_user
-    }))
+    User::insert_user(&new_user, &conn)
+        .map(|new_user| status::Created("Created user".to_string(), Some(Json(new_user))))
+        .map_err(error_status)
+}
+
+fn error_status(error: Error) -> Status {
+    match error {
+        Error::NotFound => Status::NotFound,
+        _ => Status::InternalServerError,
+    }
 }
