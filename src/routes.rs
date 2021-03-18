@@ -1,6 +1,6 @@
 use super::db::Conn as DbConn;
 use rocket_contrib::json::Json;
-use super::models::{User, NewUser, UserData};
+use super::models::users::{User, NewUser, UserData};
 use serde_json::Value;
 
 #[get("/", format = "application/json")]

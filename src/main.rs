@@ -19,9 +19,9 @@ use std::env;
 use routes::*;
 
 mod db;
+mod schema;
 mod models;
 mod routes;
-mod schema;
 
 fn rocket() -> rocket::Rocket {
     dotenv().ok();
