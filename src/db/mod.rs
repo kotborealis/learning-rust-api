@@ -6,6 +6,9 @@ use rocket::request::{self, FromRequest};
 use rocket::{Outcome, Request, State};
 use std::ops::Deref;
 
+pub mod models;
+pub mod schema;
+
 pub type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 
 pub fn init_pool(db_url: String) -> Pool {

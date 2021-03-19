@@ -1,36 +1,37 @@
 use super::db::Conn as DbConn;
-use super::models::users::{User, UserData, UserNew};
+use super::db::models::users::{User, NewUserInput};
 use diesel::result::Error;
 use rocket::http::Status;
-use rocket::response::status;
+use rocket::State;
+use rocket::response::{status, content};
 use rocket_contrib::json::Json;
+use juniper_rocket;
 
 #[get("/")]
 pub fn get_all(conn: DbConn) -> Result<status::Accepted<Json<Vec<User>>>, Status> {
-    User::get_all_users(&conn)
+    User::get_all(&conn)
         .map(|users| status::Accepted(Some(Json(users))))
         .map_err(|error| error_status(error))
 }
 
-#[get("/find?<username>")]
+#[get("/<id>")]
 pub fn find_user(
     conn: DbConn,
-    username: String,
+    id: i32,
 ) -> Result<status::Accepted<Json<Vec<User>>>, Status> {
-    let user_data = UserData { username };
-    User::get_user_by_username(user_data, &conn)
+    User::get_by_id(&conn, id)
         .map(|users| status::Accepted(Some(Json(users))))
         .map_err(error_status)
 }
 
-#[post("/", data = "<new_user>")]
+#[post("/", data = "<new_user_input>")]
 pub fn new_user(
     conn: DbConn,
-    new_user: Json<UserNew>,
+    new_user_input: Json<NewUserInput>,
 ) -> Result<status::Created<Json<User>>, Status> {
-    let new_user = new_user.into_inner();
+    let new_user_input = new_user_input.into_inner();
 
-    User::insert_user(&new_user, &conn)
+    User::create(&conn, &new_user_input)
         .map(|new_user| status::Created("Created user".to_string(), Some(Json(new_user))))
         .map_err(error_status)
 }
@@ -40,4 +41,9 @@ fn error_status(error: Error) -> Status {
         Error::NotFound => Status::NotFound,
         _ => Status::InternalServerError,
     }
+}
+
+#[get("/graphiql")]
+pub fn graphiql() -> content::Html<String> {
+    juniper_rocket::graphiql_source("/graphiql")
 }
