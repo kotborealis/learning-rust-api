@@ -13,17 +13,13 @@ extern crate rocket_contrib;
 extern crate serde_derive;
 extern crate serde_json;
 
-use rocket::{response::content, State};
+use crate::graphql::create_schema;
 
-use juniper::{
-    EmptyMutation, EmptySubscription, RootNode,
-};
-
-mod routes;
 mod db;
+mod graphql;
+mod routes;
 
 use dotenv::dotenv;
-use routes::*;
 use std::env;
 
 fn rocket() -> rocket::Rocket {
@@ -34,7 +30,23 @@ fn rocket() -> rocket::Rocket {
     let pool = db::init_pool(database_url);
     rocket::ignite()
         .manage(pool)
-        .mount("/api/v1/users", routes![get_all, new_user, find_user, graphiql])
+        .manage(create_schema())
+        .mount(
+            "/api/v1/users",
+            routes![
+                routes::rest::get_all,
+                routes::rest::new_user,
+                routes::rest::find_user
+            ],
+        )
+        .mount(
+            "/",
+            routes![
+                routes::graphql::graphiql,
+                routes::graphql::get_graphql_handler,
+                routes::graphql::post_graphql_handler
+            ],
+        )
 }
 
 fn main() {
