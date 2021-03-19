@@ -15,7 +15,7 @@ pub struct User {
 
 #[derive(Serialize, Deserialize, Insertable)]
 #[table_name = "users"]
-pub struct NewUserInput {
+pub struct NewUser {
     pub username: String,
     pub password: String,
     pub first_name: String,
@@ -26,18 +26,13 @@ impl User {
         all_users.order(users::id.desc()).load::<User>(conn)
     }
 
-    pub fn create(conn: &PgConnection, user: &NewUserInput) -> QueryResult<User> {
+    pub fn create(conn: &PgConnection, user: &NewUser) -> QueryResult<User> {
         diesel::insert_into(users::table)
             .values(user)
             .get_result(conn)
     }
 
-    pub fn get_by_id(
-        conn: &PgConnection,
-        id: i32,
-    ) -> Result<Vec<User>, diesel::result::Error> {
-        all_users
-            .filter(users::id.eq(id))
-            .load::<User>(conn)
+    pub fn get_by_id(conn: &PgConnection, id: i32) -> Result<User, diesel::result::Error> {
+        users::table.find(id).first::<User>(conn)
     }
 }
