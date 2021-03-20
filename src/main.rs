@@ -28,6 +28,7 @@ fn rocket() -> rocket::Rocket {
     let database_url = env::var("DATABASE_URL").expect("missing env variable DATABASE_URL");
 
     let pool = db::init_pool(database_url);
+
     rocket::ignite()
         .manage(pool)
         .manage(create_schema())
