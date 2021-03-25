@@ -19,6 +19,8 @@ serde_json = "1.0"
 custom_derive ="0.1.7"
 juniper = "0.14.2"
 juniper_rocket = "0.5.2"
+swagger-ui = { version = "0.1.5" }
+rocket-swagger-ui = { version = "0.1.5" }
 
 [dependencies.rocket_contrib]
 version = "*"
